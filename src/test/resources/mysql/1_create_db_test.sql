@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS empresatest CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'user'@'localhost' IDENTIFIED BY 'abc123.';
+GRANT ALL PRIVILEGES ON empresatest.* TO 'user'@'localhost';
+FLUSH PRIVILEGES;
