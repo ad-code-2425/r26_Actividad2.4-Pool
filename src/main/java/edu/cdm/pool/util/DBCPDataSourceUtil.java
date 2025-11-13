@@ -1,11 +1,12 @@
 package edu.cdm.pool.util;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Properties;
+
 import javax.sql.DataSource;
+
 import org.apache.commons.dbcp2.BasicDataSource;
 
 public class DBCPDataSourceUtil {

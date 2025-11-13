@@ -1,6 +1,7 @@
 package edu.cdm.pool.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Connection;
@@ -30,11 +31,12 @@ import edu.cdm.pool.util.DBCPDataSourceUtil;
  * Es decir, todos los métodos @Test comparten el mismo objeto.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class DepartamentoDAOIntegrationTest {
+class DepartamentoDAOTest {
 
     private DataSource ds;
     private DepartamentoDAO dao;
 
+    // Antes de todos los tests se crea un datasource y un DepartamentoDAO
     @BeforeAll
     void init() {
         ds = DBCPDataSourceUtil.getDataSource();
@@ -128,6 +130,7 @@ class DepartamentoDAOIntegrationTest {
 
     @BeforeEach
     void setupSchema() throws Exception {
+        // Dependiendo del valor que hayamos añadido en db.properties para SELECTED_SGBD
         String dbtype = DBCPDataSourceUtil.getDbType();
         switch (dbtype) {
             case "MYSQL":
@@ -152,10 +155,24 @@ class DepartamentoDAOIntegrationTest {
     @Test
     void testInsertAndGeneratedKey() throws Exception {
         Departamento d = new Departamento(null, "OPERATIONS", "BOSTON");
-        Optional<Integer> key = dao.insert(d);
-        assertTrue(key.isPresent(), "Debe devolverse la clave generada");
+        Integer key = dao.insert(d);
+        assertNotNull(key, "Debe devolverse la clave generada");
         List<Departamento> all = dao.findAll();
         assertEquals(3, all.size());
+    }
+
+    @Test
+    void testReadExisting() throws Exception {
+        // insertar y leer
+        Departamento d = new Departamento(null, "QUALITY", "MADRID");
+        Integer key = dao.insert(d);
+        assertNotNull(key, "Clave generada no debe ser null");
+
+        Departamento leido = dao.read(key);
+        assertNotNull(leido, "El departamento leído no debe ser null");
+        assertEquals(key.intValue(), leido.getDeptno().intValue());
+        assertEquals("QUALITY", leido.getDeptName());
+        assertEquals("MADRID", leido.getLoc());
     }
 
     @Test
@@ -164,9 +181,20 @@ class DepartamentoDAOIntegrationTest {
         Departamento primero = all.get(0);
         primero.setDeptName("SALES_UPDATED");
         int updated = dao.update(primero);
+        // Se ha modificado un registro
         assertEquals(1, updated);
         List<Departamento> again = dao.findAll();
-        assertTrue(again.stream().anyMatch(dep -> "SALES_UPDATED".equals(dep.getDeptName())));
+        // assertTrue(again.stream().anyMatch(dep ->
+        // "SALES_UPDATED".equals(dep.getDeptName())));
+        // comprobación sin programación funcional
+        boolean encontrado = false;
+        for (Departamento dep : again) {
+            if ("SALES_UPDATED".equals(dep.getDeptName())) {
+                encontrado = true;
+                break;
+            }
+        }
+        assertTrue(encontrado);
     }
 
     @Test

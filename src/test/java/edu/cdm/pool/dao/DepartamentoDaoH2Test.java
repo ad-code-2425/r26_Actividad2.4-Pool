@@ -8,7 +8,6 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,26 +37,24 @@ class DepartamentoDaoH2Test {
             s.execute("DROP TABLE IF EXISTS DEPT");
 
             s.execute(
-                "CREATE TABLE DEPT (" +
-                "DEPTNO INT AUTO_INCREMENT PRIMARY KEY, " +
-                "DNAME VARCHAR(100), " +
-                "LOC VARCHAR(100)" +
-                ")"
-            );
+                    "CREATE TABLE DEPT (" +
+                            "DEPTNO INT AUTO_INCREMENT PRIMARY KEY, " +
+                            "DNAME VARCHAR(100), " +
+                            "LOC VARCHAR(100)" +
+                            ")");
 
             s.execute(
-                "CREATE TABLE EMP (" +
-                "EMPNO INT AUTO_INCREMENT PRIMARY KEY, " +
-                "ENAME VARCHAR(100), " +
-                "JOB VARCHAR(100), " +
-                "MGR INT, " +
-                "HIREDATE DATE, " +
-                "SAL DECIMAL(15,2), " +
-                "COMM DECIMAL(15,2), " +
-                "DEPTNO INT, " +
-                "FOREIGN KEY (DEPTNO) REFERENCES DEPT(DEPTNO)" +
-                ")"
-            );
+                    "CREATE TABLE EMP (" +
+                            "EMPNO INT AUTO_INCREMENT PRIMARY KEY, " +
+                            "ENAME VARCHAR(100), " +
+                            "JOB VARCHAR(100), " +
+                            "MGR INT, " +
+                            "HIREDATE DATE, " +
+                            "SAL DECIMAL(15,2), " +
+                            "COMM DECIMAL(15,2), " +
+                            "DEPTNO INT, " +
+                            "FOREIGN KEY (DEPTNO) REFERENCES DEPT(DEPTNO)" +
+                            ")");
 
             s.execute("INSERT INTO DEPT(DNAME, LOC) VALUES('SALES','NEW YORK')");
             s.execute("INSERT INTO DEPT(DNAME, LOC) VALUES('RESEARCH','DALLAS')");
@@ -73,10 +70,35 @@ class DepartamentoDaoH2Test {
     @Test
     void testInsertAndGeneratedKey() throws Exception {
         Departamento d = new Departamento(null, "OPERATIONS", "BOSTON");
-        Optional<Integer> key = dao.insert(d);
-        assertTrue(key.isPresent(), "Debe devolverse la clave generada");
+        Integer key = dao.insert(d);
+        assertNotNull(key, "Debe devolverse la clave generada");
         List<Departamento> all = dao.findAll();
         assertEquals(3, all.size());
+
+        // comprobación de que existe un departamento con el mismo nombre con el que ha
+        // sido actualizado y mismo id que antes de ser actualizado
+        boolean encontrado = false;
+        for (Departamento dep : all) {
+            if ("OPERATIONS".equals(dep.getDeptName()) && "BOSTON".equals(dep.getLoc())) {
+                encontrado = true;
+                break;
+            }
+        }
+        assertTrue(encontrado);
+    }
+
+    @Test
+    void testReadExisting() throws Exception {
+        // insertar y leer
+        Departamento d = new Departamento(null, "QUALITY", "MADRID");
+        Integer key = dao.insert(d);
+        assertNotNull(key, "Clave generada no debe ser null");
+
+        Departamento leido = dao.read(key);
+        assertNotNull(leido, "El departamento leído no debe ser null");
+        assertEquals(key.intValue(), leido.getDeptno().intValue());
+        assertEquals("QUALITY", leido.getDeptName());
+        assertEquals("MADRID", leido.getLoc());
     }
 
     @Test
@@ -88,8 +110,17 @@ class DepartamentoDaoH2Test {
         int updated = dao.update(primero);
         assertEquals(1, updated);
         List<Departamento> again = dao.findAll();
-        assertTrue(again.stream().anyMatch(dep -> "SALES_UPDATED".equals(dep.getDeptName()) && primeroId.equals(dep.getDeptno())));
-      
+
+        // comprobación de que existe un departamento con el mismo nombre con el que ha
+        // sido actualizado y mismo id que antes de ser actualizado
+        boolean encontrado = false;
+        for (Departamento dep : again) {
+            if ("SALES_UPDATED".equals(dep.getDeptName()) && primeroId.equals(dep.getDeptno())) {
+                encontrado = true;
+                break;
+            }
+        }
+        assertTrue(encontrado);
     }
 
     @Test
@@ -99,5 +130,12 @@ class DepartamentoDaoH2Test {
         int deleted = dao.delete(id);
         assertEquals(1, deleted);
         assertEquals(1, dao.findAll().size());
+    }
+
+
+     @Test
+    void testDeleteNonExisting() throws Exception {
+        int deleted = dao.delete(999999);
+        assertEquals(0, deleted);
     }
 }
