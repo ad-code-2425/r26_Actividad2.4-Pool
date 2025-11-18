@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests rápidos de integración usando H2 en memoria para no tocar la BD real.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class DepartamentoDaoH2Test {
+class DepartamentoDAOH2Test {
 
     private DataSource ds;
     private DepartamentoDAO dao;
