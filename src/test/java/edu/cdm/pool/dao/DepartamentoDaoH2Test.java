@@ -29,7 +29,7 @@ class DepartamentoDaoH2Test {
         this.ds = h2;
     }
 
-    @BeforeEach
+    @BeforeAll
     void setupSchema() throws Exception {
         dao = new DepartamentoDAO(ds);
         try (Connection c = ds.getConnection(); Statement s = c.createStatement()) {
@@ -132,10 +132,18 @@ class DepartamentoDaoH2Test {
         assertEquals(1, dao.findAll().size());
     }
 
-
-     @Test
+    @Test
     void testDeleteNonExisting() throws Exception {
         int deleted = dao.delete(999999);
         assertEquals(0, deleted);
+    }
+
+    @AfterAll
+    void shutdownH2() throws Exception {
+        try (Connection conn = this.ds.getConnection();
+                Statement stmt = conn.createStatement()) {
+
+            stmt.execute("SHUTDOWN");
+        }
     }
 }
