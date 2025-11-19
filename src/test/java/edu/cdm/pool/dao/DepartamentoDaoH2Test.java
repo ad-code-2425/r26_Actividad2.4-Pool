@@ -26,10 +26,10 @@ class DepartamentoDAOH2Test {
         h2.setURL("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
         h2.setUser("sa");
         h2.setPassword("");
-        this.ds = h2;
+        this.ds = h2; 
     }
 
-    @BeforeAll
+    @BeforeEach
     void setupSchema() throws Exception {
         dao = new DepartamentoDAO(ds);
         try (Connection c = ds.getConnection(); Statement s = c.createStatement()) {

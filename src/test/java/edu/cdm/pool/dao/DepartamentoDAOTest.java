@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.List;
-import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -128,6 +127,38 @@ class DepartamentoDAOTest {
         }
     }
 
+      
+    void setupSchemaForH2() throws Exception {
+        dao = new DepartamentoDAO(ds);
+        try (Connection c = ds.getConnection(); Statement s = c.createStatement()) {
+            s.execute("DROP TABLE IF EXISTS EMP");
+            s.execute("DROP TABLE IF EXISTS DEPT");
+
+            s.execute(
+                    "CREATE TABLE DEPT (" +
+                            "DEPTNO INT AUTO_INCREMENT PRIMARY KEY, " +
+                            "DNAME VARCHAR(100), " +
+                            "LOC VARCHAR(100)" +
+                            ")");
+
+            s.execute(
+                    "CREATE TABLE EMP (" +
+                            "EMPNO INT AUTO_INCREMENT PRIMARY KEY, " +
+                            "ENAME VARCHAR(100), " +
+                            "JOB VARCHAR(100), " +
+                            "MGR INT, " +
+                            "HIREDATE DATE, " +
+                            "SAL DECIMAL(15,2), " +
+                            "COMM DECIMAL(15,2), " +
+                            "DEPTNO INT, " +
+                            "FOREIGN KEY (DEPTNO) REFERENCES DEPT(DEPTNO)" +
+                            ")");
+
+            s.execute("INSERT INTO DEPT(DNAME, LOC) VALUES('SALES','NEW YORK')");
+            s.execute("INSERT INTO DEPT(DNAME, LOC) VALUES('RESEARCH','DALLAS')");
+        }
+    }
+
     @BeforeEach
     void setupSchema() throws Exception {
         // Dependiendo del valor que hayamos añadido en db.properties para SELECTED_SGBD
@@ -138,6 +169,10 @@ class DepartamentoDAOTest {
                 break;
             case "SQLSERVER":
                 setupSchemaForSQLServer();
+                break;
+            case "H2":
+                // En el test con H2 usamos el mismo script que en MySQL
+                setupSchemaForH2();
                 break;
             default:
                 throw new UnsupportedOperationException("El tipo " + dbtype + " no se reconoce como tipo soportado");
